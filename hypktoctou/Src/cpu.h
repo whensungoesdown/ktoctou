@@ -207,32 +207,66 @@ typedef struct _GDTR
 	unsigned BaseHi		:16;
 } GDTR;
 
-typedef struct
-{
-	unsigned LimitLo	:16;
-	unsigned BaseLo	:16;
-	unsigned BaseMid	:8;
-	unsigned Type	:4;
-	unsigned System	:1;
-	unsigned DPL	:2;
-	unsigned Present	:1;
-	unsigned LimitHi	:4;
-	unsigned AVL	:1;
-	unsigned L	:1;
-	unsigned DB	:1;
-	unsigned Gran	:1;	// Granularity
-	unsigned BaseHi	:8;
-} SEGMENT_DESCRIPTOR, *PSEGMENT_DESCRIPTOR;
+//typedef struct
+//{
+//	unsigned LimitLo	:16;
+//	unsigned BaseLo	:16;
+//	unsigned BaseMid	:8;
+//	unsigned Type	:4;
+//	unsigned System	:1;
+//	unsigned DPL	:2;
+//	unsigned Present	:1;
+//	unsigned LimitHi	:4;
+//	unsigned AVL	:1;
+//	unsigned L	:1;
+//	unsigned DB	:1;
+//	unsigned Gran	:1;	// Granularity
+//	unsigned BaseHi	:8;
+//} SEGMENT_DESCRIPTOR, *PSEGMENT_DESCRIPTOR;
+//
+//typedef struct
+//{
+//	USHORT limit0;
+//	USHORT base0;
+//	UCHAR base1;
+//	UCHAR attr0;
+//	UCHAR limit1attr1;
+//	UCHAR base2;
+//} SEGMENT_DESCRIPTOR2, *PSEGMENT_DESCRIPTOR2;
+//
+///* 
+//* Attribute for segment selector. This is a copy of bit 40:47 & 52:55 of the
+//* segment descriptor. 
+//*/
+//typedef union
+//{
+//	USHORT UCHARs;
+//	struct
+//	{
+//		USHORT type:4;              /* 0;  Bit 40-43 */
+//		USHORT s:1;                 /* 4;  Bit 44 */
+//		USHORT dpl:2;               /* 5;  Bit 45-46 */
+//		USHORT p:1;                 /* 7;  Bit 47 */
+//		// gap!
+//		USHORT Gap:4;
+//		USHORT avl:1;               /* 8;  Bit 52 */
+//		USHORT l:1;                 /* 9;  Bit 53 */
+//		USHORT db:1;                /* 10; Bit 54 */
+//		USHORT g:1;                 /* 11; Bit 55 */
+//
+//	} fields;
+//} SEGMENT_ATTRIBUTES;
+//
+//
+//typedef struct
+//{
+//	USHORT sel;
+//	SEGMENT_ATTRIBUTES attributes;
+//	ULONG32 limit;
+//	ULONG64 base;
+//} SEGMENT_SELECTOR, *PSEGMENT_SELECTOR;
 
-typedef struct
-{
-	USHORT limit0;
-	USHORT base0;
-	UCHAR base1;
-	UCHAR attr0;
-	UCHAR limit1attr1;
-	UCHAR base2;
-} SEGMENT_DESCRIPTOR2, *PSEGMENT_DESCRIPTOR2;
+#pragma pack (push, 1)
 
 /* 
 * Attribute for segment selector. This is a copy of bit 40:47 & 52:55 of the
@@ -247,12 +281,12 @@ typedef union
 		USHORT s:1;                 /* 4;  Bit 44 */
 		USHORT dpl:2;               /* 5;  Bit 45-46 */
 		USHORT p:1;                 /* 7;  Bit 47 */
-		// gap!
-		USHORT Gap:4;
+		
 		USHORT avl:1;               /* 8;  Bit 52 */
 		USHORT l:1;                 /* 9;  Bit 53 */
 		USHORT db:1;                /* 10; Bit 54 */
 		USHORT g:1;                 /* 11; Bit 55 */
+		USHORT Gap:4;
 
 	} fields;
 } SEGMENT_ATTRIBUTES;
@@ -265,6 +299,18 @@ typedef struct
 	ULONG32 limit;
 	ULONG64 base;
 } SEGMENT_SELECTOR, *PSEGMENT_SELECTOR;
+
+typedef struct _SEGMENT_DESCRIPTOR
+{
+	USHORT limit0;
+	USHORT base0;
+	UCHAR  base1;
+	UCHAR  attr0;
+	UCHAR  limit1attr1;
+	UCHAR  base2;
+} SEGMENT_DESCRIPTOR,*PSEGMENT_DESCRIPTOR;
+
+#pragma pack(pop)
 //-----------------------------------------------------------------------------//
 ULONG
 GetSegmentDescriptorLimit (

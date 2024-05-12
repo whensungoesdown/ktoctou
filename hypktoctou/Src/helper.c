@@ -73,7 +73,7 @@ NTSTATUS FindTargetProcess()
 
 		DbgPrint("ImageName: %S\n", pProcessInfo->ImageName.Buffer);
 
-		if ((NULL != pProcessInfo->ImageName.Buffer) && (0 == wcsncmp(/*L"testxxx"*/ L"notepad", pProcessInfo->ImageName.Buffer, 7)))
+		if ((NULL != pProcessInfo->ImageName.Buffer) && (0 == wcsncmp(L"testxxx" /*L"notepad"*/, pProcessInfo->ImageName.Buffer, 7)))
 		{
 			ULONG ulCr3 = 0;
 			ULONG ulKprcb = 0;

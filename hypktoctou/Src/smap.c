@@ -20,7 +20,10 @@ ULONG g_PrintMsg = 1;
 
 ULONG g_VirtualAddress = 0;
 //-----------------------------------------------------------------------------//
-DWORD g_jumpback80541726 = 0x80541726;
+// 3.
+//DWORD g_jumpback80541726 = 0x80541726;
+//DWORD g_jumpback804de8f6 = 0x804de8f6;
+DWORD g_jumpback8053d742 = 0x8053d742;
 //-----------------------------------------------------------------------------//
 #define PTE_BASE 0xc0000000
 
@@ -51,7 +54,7 @@ BOOLEAN IsAvailableSmap ()
 {
 	__asm
 	{
-		int 3
+		//int 3
 		mov eax, 07
 		xor ecx, ecx
 		cpuid                                   //; main-leaf = 07, sub-leaf = 0
@@ -366,7 +369,10 @@ __declspec(naked) void FuncKiSystemCallExit2()
 
 
 		test byte ptr[esp + 9], 1
-		jmp g_jumpback80541726;
+		// 4.
+		//jmp g_jumpback80541726;
+		//jmp g_jumpback804de8f6;
+		jmp g_jumpback8053d742;
 	}
 }
 //-----------------------------------------------------------------------------//
@@ -383,15 +389,50 @@ nt!KiSystemCallExit2:
 80541733 fb              sti
 
 */
+
+/*
+kd> u nt!KiSystemCallExit2
+nt!KiSystemCallExit2:
+804de8f1 f644240901      test    byte ptr [esp+9],1
+804de8f6 75f8            jne     nt!KiSystemCallExit (804de8f0)
+804de8f8 5a              pop     edx
+804de8f9 83c404          add     esp,4
+804de8fc 80642401fd      and     byte ptr [esp+1],0FDh
+804de901 9d              popfd
+804de902 59              pop     ecx
+804de903 fb              sti
+
+*/
+
+/*
+kd> u nt!KiSystemCallExit2
+nt!KiSystemCallExit2:
+8053d73d f644240901      test    byte ptr [esp+9],1
+8053d742 75f8            jne     nt!KiSystemCallExit (8053d73c)
+8053d744 5a              pop     edx
+8053d745 83c404          add     esp,4
+8053d748 80642401fd      and     byte ptr [esp+1],0FDh
+8053d74d 9d              popfd
+8053d74e 59              pop     ecx
+8053d74f fb              sti
+*/
+
 int HookKiSystemCallExit2()
 {
 	char hookcode[5] = { 0xe9, 0, 0, 0, 0 };
 
+	// 1.
 	// calc jmp offset 
-	*((ULONG*)(hookcode + 1)) = (ULONG)FuncKiSystemCallExit2 - 0x80541721 - 5;
+	//*((ULONG*)(hookcode + 1)) = (ULONG)FuncKiSystemCallExit2 - 0x80541721 - 5;
+	//*((ULONG*)(hookcode + 1)) = (ULONG)FuncKiSystemCallExit2 - 0x804de8f1 - 5;
+	*((ULONG*)(hookcode + 1)) = (ULONG)FuncKiSystemCallExit2 - 0x8053d73d - 5;
+
 
 	DisableWriteProtect();
-	RtlCopyMemory((char*)0x80541721, hookcode, 5);
+	// 2.
+	//RtlCopyMemory((char*)0x80541721, hookcode, 5);
+	//RtlCopyMemory((char*)0x804de8f1, hookcode, 5);
+	RtlCopyMemory((char*)0x8053d73d, hookcode, 5);
 	EnableWriteProtect();
 	return 0;
 }
@@ -487,7 +528,7 @@ BOOLEAN IsMyselfHoldingAPage(ULONG Cr3, ULONG Teb, ULONG VirtualAddress)
 
 			if (0x4 == (ULONG)VirtualAddress) // uty: test
 			{
-				__asm int 3;
+				//__asm int 3;
 			}
 
 			pPte->u.Hard.Owner = 1;
@@ -560,7 +601,7 @@ BOOLEAN smap_violation(int error_codes, int cs, int flags)
 //-----------------------------------------------------------------------------//
 UCHAR g_OriByte = 0;
 //-----------------------------------------------------------------------------//
-LONG HandleSmap(VOID)
+LONG HandleSmap_bak(VOID)
 {
 	PVOID VirtualAddress = NULL;
 	PMMPTE pPte = NULL;
@@ -672,7 +713,7 @@ LONG HandleSmap(VOID)
 		pPte->u.Hard.Owner = 0;
 		KeReleaseSpinLock(&g_SpinkLock, OldIrql);
 
-		//DbgPrint("Smap violation :error code 0x%x, cs 0x%x, VA 0x%x, cr3 0x%x, eip 0x%x, eflags 0x%x, TEB 0x%x\n", error, ulCs, VirtualAddress, ulCr3, ulEip, ulEflags, ulTeb);
+		DbgPrint("Smap violation :error code 0x%x, cs 0x%x, VA 0x%x, cr3 0x%x, eip 0x%x, eflags 0x%x, TEB 0x%x\n", error, ulCs, VirtualAddress, ulCr3, ulEip, ulEflags, ulTeb);
 
 		{
 			ULONG ulNextInst = 0;
@@ -687,7 +728,7 @@ LONG HandleSmap(VOID)
 
 			if (g_OriByte == (UCHAR)0xcc)
 			{
-				__asm int 3;
+				//__asm int 3;
 			}
 			*(PUCHAR)ulNextInst = (UCHAR)0xcc;
 
@@ -705,6 +746,649 @@ LONG HandleSmap(VOID)
 	}
 	
 	DbgPrint("Unhandled !!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+
+	return 0;
+}
+//-----------------------------------------------------------------------------//
+LONG HandleSmap_bak2(VOID)
+{
+	PVOID VirtualAddress = NULL;
+	PMMPTE pPte = NULL;
+	ULONG error = 0;
+	ULONG ulEsp = 0;
+	ULONG ulCr3 = 0;
+	ULONG ulEip = 0;
+	ULONG ulCs = 0;
+	ULONG ulEflags = 0;
+	ULONG ulTeb = 0;
+	ULONG ulFs = 0;
+	ULONG ulKprcb = 0;
+
+	KIRQL OldIrql;
+
+	
+
+	__asm
+	{
+		mov eax, cr3
+		mov ulCr3, eax
+	}
+
+	if (g_TargetCr3 != ulCr3)
+	{
+		return 0;
+	}
+
+	__asm
+	{
+		//int 3;
+		mov eax, [ebp+0x30]
+		mov error, eax
+
+		mov eax, [ebp+0x34]
+		mov ulEip, eax
+
+		mov eax, [ebp+0x38]
+		mov ulCs, eax
+
+		mov eax, [ebp+0x3c]
+		mov ulEflags, eax
+
+		mov ulEsp, esp
+		
+		//mov eax, cr3
+		//mov ulCr3, eax
+
+		mov eax, fs:0x18
+		mov ulTeb, eax
+
+		xor eax, eax
+		mov ax, fs
+		mov ulFs, eax
+
+		mov eax, fs:0x20
+		mov ulKprcb, eax
+	}
+
+
+	VirtualAddress = (PVOID)__readcr2();
+
+	if (g_PrintMsg)
+	{
+		//DbgPrint("error code 0x%x, cs 0x%x, VA 0x%x, cr3 0x%x, eip 0x%x eflags 0x%x\n", error, ulCs, VirtualAddress, ulCr3, ulEip, ulEflags);
+
+		//if (ulEip == (ULONG)0x7c917402)
+		//{
+		//	__asm int 3;
+		//}
+	}
+
+	//if (0x4 == (ULONG)VirtualAddress)
+	//{
+	//	//DbgPrint("Exception data 0x%x :error code 0x%x, cs 0x%x, VA 0x%x, cr3 0x%x, eip 0x%x, eflags 0x%x, Teb 0x%x\n", *(PULONG)0x4, error, ulCs, VirtualAddress, ulCr3, ulEip, ulEflags, ulTeb);
+
+	//	//__asm int 3;
+	//}
+	//
+
+	
+	//if (error & PF_RSVD)
+	//{
+	//	////DbgPrint("PF_RSVD is 1, pass\n");
+	//	return 0;
+	//}
+
+
+	//
+	//  It's important to set interrupts right away, there may be nested page fault
+	//  Also it seems to related to IPI
+	//
+
+	__asm sti;
+
+
+	if ((ULONG)VirtualAddress >= (ULONG)0x80000000)
+	{
+		////DbgPrint("VirtualAddress bigger than 0x80000000, pass\n");
+		return 0;
+	}
+
+	if (0 == (error & PF_PROT))
+	{
+		//if ((((ULONG)VirtualAddress & 0xFFFFF000) == 0x0) || (((ULONG)VirtualAddress & 0xFFFFF000) == 0xC0000000))
+		//{
+		//	//DbgPrint("???????????PF_PROT is 0, error code 0x%x, cs 0x%x, VA 0x%x, cr3 0x%x, eip 0x%x eflags 0x%x\n", error, ulCs, VirtualAddress, ulCr3, ulEip, ulEflags);
+		//}
+		////DbgPrint("PF_PROT is 0, error code 0x%x, cs 0x%x, VA 0x%x, cr3 0x%x, eip 0x%x eflags 0x%x\n", error, ulCs, VirtualAddress, ulCr3, ulEip, ulEflags);
+		
+		return 0;
+	}
+
+	//if (0 == (error & PF_PROT))
+	//{
+
+	//	if (0 == (error & PF_USER))
+	//	{
+	//		return 0;
+	//	}
+	//}
+
+
+	pPte = MiGetPteAddress(VirtualAddress);
+
+
+	// For example, ProbeForWrite a user read-only memory
+	if ((error & PF_WRITE) && (0 == pPte->u.Hard.Write) /*&& (1 == pPte->u.Hard.Owner)*/ && ((ULONG)VirtualAddress <= 0x80000000) /*&& !IsSmapPage(0, (ULONG)VirtualAddress)*/)
+		                                                  // it's pte already been changed to KR, and it's a user address, 
+	                                                      // for example: Smap violation :error code 0x3, cs 0x8, VA 0x12d1a8, cr3 0x6d401e0, eip 0x80615a85, eflags 0x10206, TEB 0x7ffdf000
+		                                                  // 1: kd> u 0x80615a85 
+		                                                  // nt!ProbeForWrite + 0x3b:
+	{
+		//if (0x4 == (ULONG)VirtualAddress)
+		//{
+		//	//DbgPrint("?????????????????? 0x0 page, Write a user read-only page, error code 0x%x, cs 0x%x, VA 0x%x, cr3 0x%x, eip 0x%x eflags 0x%x\n", error, ulCs, VirtualAddress, ulCr3, ulEip, ulEflags);
+		//}
+		//
+		return 0;
+	}
+
+	////DbgPrint("error code 0x%x, cs 0x%x, VA 0x%x, cr3 0x%x, eip 0x%x eflags 0x%x\n", error, ulCs, VirtualAddress, ulCr3, ulEip, ulEflags);
+
+
+	if (smap_violation(error, ulCs, ulEflags) /*&& ((ULONG)ulEip > (ULONG)0x80000000)*/)
+	{
+		//ULONG ulTeb = 0;
+
+		// uty: test
+		//if ((ULONG)0 != ulCr3)
+		//{
+		//	// set eflags AC bit
+		//	ulEflags = ulEflags & X86_EFLAGS_AC;
+		//	__asm
+		//	{
+		//		mov eax, ulEflags
+		//		mov[ebp + 0x3c], eax
+
+		//		//__ASM_STAC
+		//		_emit 0x0f
+		//		_emit 0x01
+		//		_emit 0xcb
+		//	}
+
+		//	return 1; //hanle this exception by ourself
+		//}
+
+
+		//if (g_PrintMsg)
+		//{
+		//	if (ulEip == 0x8053d850       // nt!KiSystemServiceCopyArguments:
+		//		|| ulEip == 0x8053d80a    // nt!KiSystemServiceAccessTeb:
+		//		|| ulEip == 0x8060d1e9    // nt!ProbeForWrite+0x39:
+		//		)
+		//	{
+		//		 // nothing
+		//	}
+		//	else
+		//	{
+//DbgPrint("Smap violation :error code 0x%x, cs 0x%x, VA 0x%x, cr3 0x%x, eip 0x%x, eflags 0x%x, TEB 0x%x\n", error, ulCs, VirtualAddress, ulCr3, ulEip, ulEflags, ulTeb);
+		//	}
+		//	
+		//}
+
+		AddSampPage(ulCr3, ulEip, (ULONG)VirtualAddress, ulTeb, error & PF_WRITE);
+		
+		pPte = MiGetPteAddress(VirtualAddress);
+
+
+		KeAcquireSpinLock(&g_SpinkLock, &OldIrql);
+		pPte->u.Hard.Owner = 0;
+		KeReleaseSpinLock(&g_SpinkLock, OldIrql);
+
+		// uty: test
+		//pKeFlushSingleTb(VirtualAddress, FALSE, FALSE, (PULONGLONG)pPte, *(PULONGLONG)pPte);
+
+
+
+		//pKeFlushSingleTb(VirtualAddress, FALSE, FALSE, pPte, *(PULONGLONG)pPte);
+		//__invlpg(VirtualAddress);
+		//__asm int 3;
+		//pKeFlushSingleTb(VirtualAddress, FALSE);
+		//__asm int 3;
+		////DbgPrint("cs: 0x%x, fs: 0x%x\n", ulCs, ulFs);
+		//if (ulFs != 0x30)
+		//{
+		//	__asm int 3;
+		//}
+		//pKeFlushEntireTb(TRUE, 0);
+		//TestFlush();
+		//__invlpg(0);
+		//VmxVmCall1(0x30, 0);
+
+		//if (ulKprcb == 0xffdff120/*g_TargetKprcb*/ /*&& (ULONG)VirtualAddress == 0x8*/)
+		//{
+			//LARGE_INTEGER time = { 0 };
+			////DbgPrint("SetMember 0x%x\n", GetProcSetMember());
+			//__asm cli;
+			//pKeFlushEntireTb(FALSE, 0);
+			//pKeFlushSingleTb(VirtualAddress, FALSE, FALSE, pPte, *(PULONGLONG)pPte);
+			//__asm sti;
+			// uty: test
+			//time.QuadPart = (LONGLONG)-300000; // waits for 30 milliseconds
+
+			//KeDelayExecutionThread(UserMode, TRUE, &time);
+		//}
+		
+
+		//pPte->u.Hard.Write = 1; // no need
+
+
+		g_SmapExceptionCount++;
+
+		return 1;
+	}
+	//else if ((0x5 == error) || (0x7 == error) || (0x15 == error))
+	else if (((ULONG)ulEip < (ULONG)0x80000000) && (error & PF_USER) /*&& (pPte->u.Hard.Owner == 0)*/)
+	{
+
+		if (!IsSmapPage(0, (ULONG)VirtualAddress) && (0x4 != (ULONG)VirtualAddress))  // uty: bug  need cr3
+		{
+			pPte = MiGetPteAddress(VirtualAddress);
+
+			//DbgPrint("Pass, Not SMAP page, 0x%x!!\n", VirtualAddress);
+
+			/// uty: test
+			//KeAcquireSpinLock(&g_SpinkLock, &OldIrql);
+			//pPte->u.Hard.Owner = 1;
+			//KeReleaseSpinLock(&g_SpinkLock, OldIrql);
+			//__invlpg(VirtualAddress);
+
+			
+			return 1;
+		}
+
+		if (g_PrintMsg)
+		{
+//DbgPrint("!!!Access a smap page :error code 0x%x, cs 0x%x, VA 0x%x, cr3 0x%x, eip 0x%x eflags 0x%x, Teb 0x%x\n", error, ulCs, VirtualAddress, ulCr3, ulEip, ulEflags, ulTeb);
+		}
+
+		if ((ULONG)ulEip == 0x7c90e4f4   // ntdll!KiFastSystemCallRet
+			|| (ULONG)ulEip == 0x7c90e434 // ntdll!KiUserApcDispatcher + 0x4
+			|| (ULONG)ulEip == 0x7c81070b
+			|| (ULONG)ulEip == 0x7c90e45c // ntdll!KiUserExceptionDispatcher
+			|| (ULONG)ulEip == 0x7c90e8b0 // ntdll!_SEH_prolog+0x5
+
+			//|| (ULONG)ulEip == 0x7e418603
+			//|| (ULONG)ulEip == 0x7e419335
+			//|| (ULONG)ulEip == 0x77f16a17
+			//|| (ULONG)ulEip == 0x7c90fe40
+			//|| (ULONG)ulEip == 0x77f159da
+			//|| (ULONG)ulEip == 0x7e42a4d5
+			//|| (ULONG)ulEip == 0x77f1613a
+			//|| (ULONG)ulEip == 0x77f16b83
+			//|| (ULONG)ulEip == 0x5ad76033
+			//|| (ULONG)ulEip == 0x7c90e443
+			//|| (ULONG)ulEip == 0x7c8106eb
+			|| ((ULONG)VirtualAddress & 0xFFF00000) == 0x7ff00000
+			)
+		{
+			pPte = MiGetPteAddress(VirtualAddress);
+
+//DbgPrint("Pass!! VA: 0x%x\n", (ULONG)VirtualAddress);
+
+			KeAcquireSpinLock(&g_SpinkLock, &OldIrql);
+			pPte->u.Hard.Owner = 1;
+			//pPte->u.Hard.Write = 1; // uty: test
+			KeReleaseSpinLock(&g_SpinkLock, OldIrql);
+			//__invlpg(VirtualAddress);
+			//pKeFlushSingleTb(VirtualAddress, FALSE);
+
+			
+			return 1;
+		}
+		else
+		{
+
+			//pPte = MiGetPteAddress(VirtualAddress);
+
+			//pPte->u.Hard.Owner = 1;
+			//pPte->u.Hard.Write = 0;
+
+			//error = error | PF_WRITE;
+
+			//__asm
+			//{
+			//	mov error, eax
+			//	mov [ebp + 0x30], eax
+			//}
+
+			////DbgPrint("Deny!! Change to READ_ONLY\n");
+
+			////DumpSmapPages();
+			//return 0;
+
+			pPte = MiGetPteAddress(VirtualAddress);
+
+			if (error & PF_WRITE)
+			{
+				LARGE_INTEGER time;
+				int cnt = 10;
+
+				if (IsMyselfHoldingAPage(0, ulTeb, (ULONG)VirtualAddress))  // the thread itself is holding this page.
+				{
+//DbgPrint("The thread itself is holding this page. Pass!! VA: 0x%x\n", (ULONG)VirtualAddress);
+
+					KeAcquireSpinLock(&g_SpinkLock, &OldIrql);
+					pPte->u.Hard.Owner = 1;
+					//pPte->u.Hard.Write = 1; // uty: test
+					KeReleaseSpinLock(&g_SpinkLock, OldIrql);
+					//__invlpg(VirtualAddress);
+					//pKeFlushSingleTb(VirtualAddress, FALSE);
+
+					
+					return 1;
+				}
+
+
+
+				while (TRUE)
+				{
+					// uty: test
+					time.QuadPart = (LONGLONG)-300000; // waits for 30 milliseconds
+
+					KeDelayExecutionThread(UserMode, TRUE, &time);
+
+//DbgPrint("Wait 30 milliseconds, retry.. %d\n", cnt);
+
+					if (1 == pPte->u.Hard.Write && 1 == pPte->u.Hard.Owner)
+					{
+//DbgPrint("OK, re-execute \n");
+						break;
+					}
+
+					cnt--;
+
+					if (cnt <= 0)
+					{
+						KeAcquireSpinLock(&g_SpinkLock, &OldIrql);
+						//pPte->u.Hard.Owner = 1;
+						//pPte->u.Hard.Write = 0;
+
+						pPte->u.Hard.Valid = 0; // uty: test
+						KeReleaseSpinLock(&g_SpinkLock, OldIrql);
+						//__invlpg(VirtualAddress);
+						//pKeFlushSingleTb(VirtualAddress, FALSE);
+						error = error & ~PF_PROT;
+						//DbgPrint("Deny!\n");
+						return 0;
+					}
+				}
+				
+				return 1;
+			}
+			else
+			{
+//DbgPrint("Read Access from user!! Change to READ_ONLY\n");
+
+				KeAcquireSpinLock(&g_SpinkLock, &OldIrql);
+				pPte->u.Hard.Write = 0;
+				pPte->u.Hard.Owner = 1;
+				KeReleaseSpinLock(&g_SpinkLock, OldIrql);
+				//__invlpg(VirtualAddress);
+				//pKeFlushSingleTb(VirtualAddress, FALSE);
+				
+				return 1;
+			}
+		}
+	}
+
+	return 1;
+}
+//-----------------------------------------------------------------------------//
+LONG HandleSmap(VOID)
+{
+	PVOID VirtualAddress = NULL;
+	PMMPTE pPte = NULL;
+	ULONG error = 0;
+	ULONG ulEsp = 0;
+	ULONG ulCr3 = 0;
+	ULONG ulEip = 0;
+	ULONG ulCs = 0;
+	ULONG ulEflags = 0;
+
+	__asm
+	{
+		//int 3;
+		mov eax, [ebp+0x30]
+		mov error, eax
+
+		mov eax, [ebp+0x34]
+		mov ulEip, eax
+
+		mov eax, [ebp+0x38]
+		mov ulCs, eax
+
+		mov eax, [ebp+0x3c]
+		mov ulEflags, eax
+
+		mov ulEsp, esp
+		
+		mov eax, cr3
+		mov ulCr3, eax
+
+	}
+
+	
+
+	VirtualAddress = __readcr2();
+
+	//if (g_PrintMsg)
+	//{
+	//	DbgPrint("error code 0x%x, cs 0x%x, VA 0x%x, cr3 0x%x, eip 0x%x eflags 0x%x\n", error, ulCs, VirtualAddress, ulCr3, ulEip, ulEflags);
+	//	if (ulEip == (ULONG)0x7c917402)
+	//	{
+	//		__asm int 3;
+	//	}
+	//}
+	
+
+	
+	//if (error & PF_RSVD)
+	//{
+	//	//DbgPrint("PF_RSVD is 1, pass\n");
+	//	return 0;
+	//}
+
+
+	if ((ULONG)VirtualAddress >= (ULONG)0x80000000)
+	{
+		//DbgPrint("VirtualAddress bigger than 0x80000000, pass\n");
+		return 0;
+	}
+
+	if (0 == (error & PF_PROT))
+	{
+		//DbgPrint("PF_PROT is 0, pass\n");
+		//DbgPrint("PF_PROT is 0, error code 0x%x, cs 0x%x, VA 0x%x, cr3 0x%x, eip 0x%x eflags 0x%x\n", error, ulCs, VirtualAddress, ulCr3, ulEip, ulEflags);
+		return 0;
+	}
+	//if (0 == (error & PF_PROT))
+	//{
+
+	//	if (0 == (error & PF_USER))
+	//	{
+	//		return 0;
+	//	}
+	//}
+
+	//DbgPrint("error code 0x%x, cs 0x%x, VA 0x%x, cr3 0x%x, eip 0x%x eflags 0x%x\n", error, ulCs, VirtualAddress, ulCr3, ulEip, ulEflags);
+
+	//pPte = MiGetPteAddress(ulEip);
+	//if ((pPte->u.Hard.Owner == 0) && (error & PF_USER))
+	//{
+	//	//DbgPrint("!!!!!!!!!!!!! eip < 0x80000000, pPte->u.Hard.Owner == 0, error code 0x%x, cs 0x%x, VA 0x%x, cr3 0x%x, eip 0x%x eflags 0x%x\n", error, ulCs, VirtualAddress, ulCr3, ulEip, ulEflags);
+	//	pPte->u.Hard.Owner == 1;
+	//	return 1;
+	//}
+
+	pPte = MiGetPteAddress(VirtualAddress);
+
+
+	if (smap_violation(error, ulCs, ulEflags) /*&& ((ULONG)ulEip > (ULONG)0x80000000)*/)
+	//if ((0x1 == error) || (0x3 == error))
+	{
+		ULONG ulTeb = 0;
+
+		// uty: test
+		//if ((ULONG)0 != ulCr3)
+		//{
+		//	// set eflags AC bit
+		//	ulEflags = ulEflags & X86_EFLAGS_AC;
+		//	__asm
+		//	{
+		//		mov eax, ulEflags
+		//		mov[ebp + 0x3c], eax
+
+		//		//__ASM_STAC
+		//		_emit 0x0f
+		//		_emit 0x01
+		//		_emit 0xcb
+		//	}
+
+		//	return 1; //hanle this exception by ourself
+		//}
+
+		if (g_PrintMsg)
+		{
+			
+			__asm
+			{
+				mov eax, fs:0x18
+				mov ulTeb, eax
+			}
+
+			if (ulEip == 0x8053d850       // nt!KiSystemServiceCopyArguments:
+				|| ulEip == 0x8053d80a    // nt!KiSystemServiceAccessTeb:
+				|| ulEip == 0x8060d1e9    // nt!ProbeForWrite+0x39:
+				)
+			{
+				 // nothing
+			}
+			else
+			{
+				// win the race!! DbgPrint("Smap violation :error code 0x%x, cs 0x%x, VA 0x%x, cr3 0x%x, eip 0x%x, eflags 0x%x, TEB 0x%x\n", error, ulCs, VirtualAddress, ulCr3, ulEip, ulEflags, ulTeb);
+			}
+			
+		}
+		
+		pPte = MiGetPteAddress(VirtualAddress);
+
+		pPte->u.Hard.Owner = 0;
+
+		pPte->u.Hard.Write = 1; //
+		//__asm int 3;
+
+		AddSampPage(ulCr3, ulEip, VirtualAddress, ulTeb, error & PF_WRITE);
+
+		return 1;
+	}
+	//else if ((0x5 == error) || (0x7 == error) || (0x15 == error))
+	else if (((ULONG)ulEip < 0x80000000) && (error & PF_USER) && (pPte->u.Hard.Owner == 0))
+	{
+
+		if (!IsSmapPage(0, (ULONG)VirtualAddress))  // uty: bug  need cr3
+		{
+			pPte = MiGetPteAddress(VirtualAddress);
+
+			pPte->u.Hard.Owner = 1;
+			//DbgPrint("Pass, Not SMAP page, 0x%x!!\n", VirtualAddress);
+			return 1;
+		}
+
+		if (g_PrintMsg)
+		{
+			//DbgPrint("!!!Access a smap page :error code 0x%x, cs 0x%x, VA 0x%x, cr3 0x%x, eip 0x%x eflags 0x%x\n", error, ulCs, VirtualAddress, ulCr3, ulEip, ulEflags);
+		}
+
+		if ((ULONG)ulEip == 0x7c90e4f4   // ntdll!KiFastSystemCallRet
+			|| (ULONG)ulEip == 0x7c90e434 // ntdll!KiUserApcDispatcher + 0x4
+			|| (ULONG)ulEip == 0x7c81070b
+			|| (ULONG)ulEip == 0x7c90e45c // ntdll!KiUserExceptionDispatcher
+			|| (ULONG)ulEip == 0x7c90e8b0 // ntdll!_SEH_prolog+0x5
+
+			|| (ULONG)ulEip == 0x7e418603
+			|| (ULONG)ulEip == 0x7e419335
+			|| (ULONG)ulEip == 0x77f16a17
+			|| (ULONG)ulEip == 0x7c90fe40
+			|| (ULONG)ulEip == 0x77f159da
+			|| (ULONG)ulEip == 0x7e42a4d5
+			|| (ULONG)ulEip == 0x77f1613a
+			|| (ULONG)ulEip == 0x77f16b83
+			|| (ULONG)ulEip == 0x5ad76033
+			|| (ULONG)ulEip == 0x7c90e443
+			|| (ULONG)ulEip == 0x7c8106eb
+			|| ((ULONG)VirtualAddress & 0xFFF00000) == 0x7ff00000
+			)
+		{
+			pPte = MiGetPteAddress(VirtualAddress);
+
+			pPte->u.Hard.Owner = 1;
+
+			//DbgPrint("Pass!!\n");
+			return 1;
+		}
+		else
+		{
+
+			pPte = MiGetPteAddress(VirtualAddress);
+
+			pPte->u.Hard.Owner = 1;
+			pPte->u.Hard.Write = 0;
+
+			error = error | PF_WRITE;
+
+			__asm
+			{
+				mov eax, error
+				mov [ebp + 0x30], eax
+			}
+
+
+			_mm_clflush(VirtualAddress);
+			__invlpg(VirtualAddress);
+			//DbgPrint("Value: 0x%x\n", *(PULONG)VirtualAddress);
+
+			//__asm int 3;
+
+			//DbgPrint("Deny!! Change to READ_ONLY\n");
+
+			//DumpSmapPages();
+			return 0;
+
+
+			//__asm
+			//{
+			//	mov eax, 0xAABBCCDD
+			//	mov cr2, eax
+			//}
+			//DbgPrint("Deny!!\n");
+			//return 0;
+		}
+		
+
+
+		
+	}
+
+	//if ((ulEip == (ULONG)0x7e42968c))
+	//{
+	//	DbgPrint("!!!!!!!!!!!!!!!!!!error code 0x%x, cs 0x%x, VA 0x%x, cr3 0x%x, eip 0x%x eflags 0x%x\n", error, ulCs, VirtualAddress, ulCr3, ulEip, ulEflags);
+	//}
+	
+	//__asm 
+	//{
+	//	mov eax, cr2
+	//	mov VirtualAddress, eax
+	//}
 
 	return 0;
 }

@@ -101,7 +101,7 @@ VOID HandleNMI(VOID)
 	case TRAP_DEBUG:
 
 		{
-			__asm int 3;
+			//__asm int 3;
 			DbgPrint("TRAP_DEBUG!!!!!!!!!!!!!!!!!!!!\n");
 
 			//eFlags = RegGetEflags();
@@ -173,6 +173,7 @@ HandleCR (
 	ULONG x = 0;
 
 	ULONG ulEflags= 0;
+
 
 	ExitQualification = VmxRead(EXIT_QUALIFICATION);
 	GuestCR0 = VmxRead(GUEST_CR0);
@@ -259,6 +260,7 @@ HandleCR (
 				ULONG cr4 = 0;
 				//ULONG cr0 = 0;
 
+				//__asm int 3;
 
 				cr4 = VmxRead(GUEST_CR4);
 				cr4 = cr4 | 0x200000;
@@ -351,6 +353,8 @@ VOID doVmxExitHandler (PGUEST_REGS GuestRegs)
 
 
 	ulExitReason = (ULONG)VmxRead(VM_EXIT_REASON);
+
+	//__asm int 3;
 
 	switch (ulExitReason)
 	{
