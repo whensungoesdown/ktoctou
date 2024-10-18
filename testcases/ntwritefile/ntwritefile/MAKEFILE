@@ -1,0 +1,11 @@
+# Nmake macros for building Windows 32-Bit apps
+
+!include <ntwin32.mak>
+
+all: native.exe
+
+native.obj: native.c
+    $(cc) -I%BASEDIR%\inc $(cflags) $(cvars) $(cdebug) -Fonative.obj native.c
+
+native.exe: native.obj
+    $(link) $(linkdebug) $(conflags) -out:native.exe native.obj $(conlibs) %BASEDIR%\lib\i386\free\ntdll.lib
