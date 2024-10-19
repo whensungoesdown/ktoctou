@@ -1,4 +1,8 @@
 #include <windows.h>
+//#define _X86_
+
+//#include <ntddk.h>
+
 #include <wchar.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -63,6 +67,13 @@ PVOID FindBaseAddress(ULONG pid) {
 	printf("startcycle %lld, endcycle %lld, %d\n", startcycle, endcycle, endcycle - startcycle);
 
 	// 2
+
+	printf("test 2, press ENTER to continue\n");
+	getchar();
+
+	for (i = 0; i < 5; i++)
+	{
+
 	startcycle = __rdtsc();
 
 	status = pNtQuerySystemInformation(0x10, buffer, bufferSize, NULL); // 0x10 = SystemHandleInformation
@@ -74,11 +85,16 @@ PVOID FindBaseAddress(ULONG pid) {
 	endcycle = __rdtsc();
 
 	printf("startcycle %lld, endcycle %lld, %d\n", startcycle, endcycle, endcycle - startcycle);
+
+	}
+	
 
 	printf("now load hypervisor, press ENTER to continue\n");
 	getchar();
 
 	// 3
+	for (i = 0; i < 5; i++)
+	{
 	startcycle = __rdtsc();
 
 	status = pNtQuerySystemInformation(0x10, buffer, bufferSize, NULL); // 0x10 = SystemHandleInformation
@@ -91,13 +107,15 @@ PVOID FindBaseAddress(ULONG pid) {
 
 	printf("startcycle %lld, endcycle %lld, %d\n", startcycle, endcycle, endcycle - startcycle);
 
-	for (i = 0; i <= buffer->HandleCount; i++) {
-		if ((buffer->Handles[i].ProcessId == pid)) { 
-			ProcAddress = buffer->Handles[i].Object;
-			printf("Address: 0x%p, Object Type: %d, Handle: %x\n", buffer->Handles[i].Object, buffer->Handles[i].ObjectTypeNumber, buffer->Handles[i].Handle);
-		}
-
 	}
+
+	//for (i = 0; i <= buffer->HandleCount; i++) {
+	//	if ((buffer->Handles[i].ProcessId == pid)) { 
+	//		ProcAddress = buffer->Handles[i].Object;
+	//		printf("Address: 0x%p, Object Type: %d, Handle: %x\n", buffer->Handles[i].Object, buffer->Handles[i].ObjectTypeNumber, buffer->Handles[i].Handle);
+	//	}
+
+	//}
 	free(buffer);
 }
 
