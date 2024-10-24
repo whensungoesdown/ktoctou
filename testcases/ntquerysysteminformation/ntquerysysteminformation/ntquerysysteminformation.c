@@ -53,59 +53,44 @@ PVOID FindBaseAddress(ULONG pid) {
 
 	pNtQuerySystemInformation = (_NtQuerySystemInformation)GetProcAddress(hNtDLL, "NtQuerySystemInformation");
 
-	// 1
-	startcycle = __rdtsc();
-
-	status = pNtQuerySystemInformation(0x10, buffer, bufferSize, NULL); // 0x10 = SystemHandleInformation
-	if (!NT_SUCCESS(status)) {
-		printf("NTQueryInformation Failed!\n");
-		exit(-1);
-	}
-
-	endcycle = __rdtsc();
-
-	printf("startcycle %lld, endcycle %lld, %d\n", startcycle, endcycle, endcycle - startcycle);
-
-	// 2
-
-	printf("test 2, press ENTER to continue\n");
+	printf("press ENTER to start\n");
 	getchar();
 
-	for (i = 0; i < 5; i++)
+	for (i = 0; i < 8; i++)
 	{
+		startcycle = __rdtsc();
 
-	startcycle = __rdtsc();
+		status = pNtQuerySystemInformation(0x10, buffer, bufferSize, NULL); // 0x10 = SystemHandleInformation
+		if (!NT_SUCCESS(status)) {
+			printf("NTQueryInformation Failed!\n");
+			exit(-1);
+		}
 
-	status = pNtQuerySystemInformation(0x10, buffer, bufferSize, NULL); // 0x10 = SystemHandleInformation
-	if (!NT_SUCCESS(status)) {
-		printf("NTQueryInformation Failed!\n");
-		exit(-1);
+		endcycle = __rdtsc();
+
+		printf("startcycle %lld, endcycle %lld, %d\n", startcycle, endcycle, endcycle - startcycle);
 	}
 
-	endcycle = __rdtsc();
-
-	printf("startcycle %lld, endcycle %lld, %d\n", startcycle, endcycle, endcycle - startcycle);
-
-	}
 	
 
 	printf("now load hypervisor, press ENTER to continue\n");
 	getchar();
 
-	// 3
-	for (i = 0; i < 5; i++)
+
+
+	for (i = 0; i < 8; i++)
 	{
-	startcycle = __rdtsc();
+		startcycle = __rdtsc();
 
-	status = pNtQuerySystemInformation(0x10, buffer, bufferSize, NULL); // 0x10 = SystemHandleInformation
-	if (!NT_SUCCESS(status)) {
-		printf("NTQueryInformation Failed!\n");
-		exit(-1);
-	}
+		status = pNtQuerySystemInformation(0x10, buffer, bufferSize, NULL); // 0x10 = SystemHandleInformation
+		if (!NT_SUCCESS(status)) {
+			printf("NTQueryInformation Failed!\n");
+			exit(-1);
+		}
 
-	endcycle = __rdtsc();
+		endcycle = __rdtsc();
 
-	printf("startcycle %lld, endcycle %lld, %d\n", startcycle, endcycle, endcycle - startcycle);
+		printf("startcycle %lld, endcycle %lld, %d\n", startcycle, endcycle, endcycle - startcycle);
 
 	}
 

@@ -109,6 +109,8 @@ main (int Argc, char ** Argv )
         exit(0);
      	}
 
+	printf("press ENTER to start\n");
+	getchar();
 
     //
     // Check the returned status too...
@@ -119,96 +121,52 @@ main (int Argc, char ** Argv )
         exit(0);
        }
 
-// 1
 
-	startcycle = __rdtsc();
-
-    //
-    // The file has been successfully created.  Let's try WRITING to it!
-    // Note we don't use, or need, an event handle here since we've opened
-    // the file for synchronous I/O.
-    //
-    Status = NtWriteFile(FileHandle,                   // file Handle
-                         0,                            // event Handle
-                         NULL,                         // APC entry point
-                         NULL,                         // APC context
-                         &Iosb,                        // IOSB address
-                         Message1,                      // ptr to data buffer
-                         MessageLength,                // length
-                         0,                            // byte offset
-                         NULL);                        // key
-
-    //
-    // If the WRITE system service request fails, bail out...
-    //
-    if(!NT_SUCCESS(Status) )
-        {
-        printf("NtWriteFile request failed 0x%0x\n", Status);
-        exit(0);
-        }
-
-    //
-    // Check the returned status from the WRITE.  
-    //
-    if(!NT_SUCCESS(Iosb.Status) )
-        {
-        printf("WRITE failed with status = 0x%0x\n",Iosb.Status);
-        exit(0);
-       }
-
-
-	endcycle = __rdtsc();
-
-	printf("startcycle %lld, endcycle %lld, %d\n", startcycle, endcycle, endcycle - startcycle);
-
-
-// 2
-
-	printf("test 2, press ENTER to continue\n");
-	getchar();
-
-	for (i = 0; i < 5; i++)
+	for (i = 0; i < 8; i++)
 	{
-	startcycle = __rdtsc();
 
-    //
-    // The file has been successfully created.  Let's try WRITING to it!
-    // Note we don't use, or need, an event handle here since we've opened
-    // the file for synchronous I/O.
-    //
-    Status = NtWriteFile(FileHandle,                   // file Handle
-                         0,                            // event Handle
-                         NULL,                         // APC entry point
-                         NULL,                         // APC context
-                         &Iosb,                        // IOSB address
-                         Message2,                      // ptr to data buffer
-                         MessageLength,                // length
-                         0,                            // byte offset
-                         NULL);                        // key
+		startcycle = __rdtsc();
 
-    //
-    // If the WRITE system service request fails, bail out...
-    //
-    if(!NT_SUCCESS(Status) )
-        {
-        printf("NtWriteFile request failed 0x%0x\n", Status);
-        exit(0);
-        }
+		//
+		// The file has been successfully created.  Let's try WRITING to it!
+		// Note we don't use, or need, an event handle here since we've opened
+		// the file for synchronous I/O.
+		//
+		Status = NtWriteFile(FileHandle,                   // file Handle
+			0,                            // event Handle
+			NULL,                         // APC entry point
+			NULL,                         // APC context
+			&Iosb,                        // IOSB address
+			Message1,                      // ptr to data buffer
+			MessageLength,                // length
+			0,                            // byte offset
+			NULL);                        // key
 
-    //
-    // Check the returned status from the WRITE.  
-    //
-    if(!NT_SUCCESS(Iosb.Status) )
-        {
-        printf("WRITE failed with status = 0x%0x\n",Iosb.Status);
-        exit(0);
-       }
+		//
+		// If the WRITE system service request fails, bail out...
+		//
+		if(!NT_SUCCESS(Status) )
+		{
+			printf("NtWriteFile request failed 0x%0x\n", Status);
+			exit(0);
+		}
+
+		//
+		// Check the returned status from the WRITE.  
+		//
+		if(!NT_SUCCESS(Iosb.Status) )
+		{
+			printf("WRITE failed with status = 0x%0x\n",Iosb.Status);
+			exit(0);
+		}
 
 
-	endcycle = __rdtsc();
+		endcycle = __rdtsc();
 
-	printf("startcycle %lld, endcycle %lld, %d\n", startcycle, endcycle, endcycle - startcycle);
+		printf("startcycle %lld, endcycle %lld, %d\n", startcycle, endcycle, endcycle - startcycle);
+
 	}
+
 
 	
 	
@@ -216,54 +174,48 @@ main (int Argc, char ** Argv )
 	getchar();
 
 
-	for(i = 0; i < 100000; i++)
+
+
+	for (i = 0; i < 8; i++)
 	{
-		;
-	}
+		startcycle = __rdtsc();
 
+		//
+		// The file has been successfully created.  Let's try WRITING to it!
+		// Note we don't use, or need, an event handle here since we've opened
+		// the file for synchronous I/O.
+		//
+		Status = NtWriteFile(FileHandle,                   // file Handle
+			0,                            // event Handle
+			NULL,                         // APC entry point
+			NULL,                         // APC context
+			&Iosb,                        // IOSB address
+			Message3,                      // ptr to data buffer
+			MessageLength,                // length
+			0,                            // byte offset
+			NULL);                        // key
 
-// 3
+		//
+		// If the WRITE system service request fails, bail out...
+		//
+		if(!NT_SUCCESS(Status) )
+		{
+			printf("NtWriteFile request failed 0x%0x\n", Status);
+			exit(0);
+		}
 
-	for (i = 0; i < 5; i++)
-	{
-	startcycle = __rdtsc();
+		//
+		// Check the returned status from the WRITE.  
+		//
+		if(!NT_SUCCESS(Iosb.Status) )
+		{
+			printf("WRITE failed with status = 0x%0x\n",Iosb.Status);
+			exit(0);
+		}
 
-    //
-    // The file has been successfully created.  Let's try WRITING to it!
-    // Note we don't use, or need, an event handle here since we've opened
-    // the file for synchronous I/O.
-    //
-    Status = NtWriteFile(FileHandle,                   // file Handle
-                         0,                            // event Handle
-                         NULL,                         // APC entry point
-                         NULL,                         // APC context
-                         &Iosb,                        // IOSB address
-                         Message3,                      // ptr to data buffer
-                         MessageLength,                // length
-                         0,                            // byte offset
-                         NULL);                        // key
+		endcycle = __rdtsc();
 
-    //
-    // If the WRITE system service request fails, bail out...
-    //
-    if(!NT_SUCCESS(Status) )
-        {
-        printf("NtWriteFile request failed 0x%0x\n", Status);
-        exit(0);
-        }
-
-    //
-    // Check the returned status from the WRITE.  
-    //
-    if(!NT_SUCCESS(Iosb.Status) )
-        {
-        printf("WRITE failed with status = 0x%0x\n",Iosb.Status);
-        exit(0);
-       }
-
-	endcycle = __rdtsc();
-
-	printf("startcycle %lld, endcycle %lld, %d\n", startcycle, endcycle, endcycle - startcycle);
+		printf("startcycle %lld, endcycle %lld, %d\n", startcycle, endcycle, endcycle - startcycle);
 	}
 
 

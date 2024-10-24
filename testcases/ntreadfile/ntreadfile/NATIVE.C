@@ -72,7 +72,7 @@ main (int Argc, char ** Argv )
     // Initialize a unicode string with the fully qualified path of the file
     // that we wish to create
     //
-    RtlInitUnicodeString(&UnicodeFilespec, L"\\DosDevices\\C:\\test.txt");
+    RtlInitUnicodeString(&UnicodeFilespec, L"\\DosDevices\\C:\\windows\\notepad.exe");
 
 
     //
@@ -103,105 +103,76 @@ main (int Argc, char ** Argv )
 
     //
     // Check the system service status
-    //
-    if( !NT_SUCCESS(Status) )
-       	{
-        printf("Create system service failed status = 0x%0x\n", Status);
+	//
+	if( !NT_SUCCESS(Status) )
+	{
+		printf("Create system service failed status = 0x%0x\n", Status);
 
-        exit(0);
-     	}
-
-
-    //
-    // Check the returned status too...
-    //
-    if(!NT_SUCCESS(Iosb.Status) )
-        {
-        printf("CREATE failed with status = 0x%0x\n",Iosb.Status);
-        exit(0);
-       }
-
-// 1
-
-	startcycle = __rdtsc();
-
-    Status = NtReadFile(FileHandle,                    // file Handle
-                         0,                            // event Handle
-                         NULL,                         // APC entry point
-                         NULL,                         // APC context
-                         &Iosb,                        // IOSB address
-                         buff,                         // ptr to data buffer
-                         32,                           // length
-                         0,                            // byte offset
-                         NULL);                        // key
-
-    //
-    // If the WRITE system service request fails, bail out...
-    //
-    if(!NT_SUCCESS(Status) )
-        {
-        printf("NtReadFile request failed 0x%0x\n", Status);
-        exit(0);
-        }
-
-    //
-    // Check the returned status from the WRITE.  
-    //
-    if(!NT_SUCCESS(Iosb.Status) )
-        {
-        printf("READ failed with status = 0x%0x\n",Iosb.Status);
-        exit(0);
-       }
+		exit(0);
+	}
 
 
-	endcycle = __rdtsc();
+	//
+	// Check the returned status too...
+	//
+	if(!NT_SUCCESS(Iosb.Status) )
+	{
+		printf("CREATE failed with status = 0x%0x\n",Iosb.Status);
+		exit(0);
+	}
 
-	printf("startcycle %lld, endcycle %lld, %d\n", startcycle, endcycle, endcycle - startcycle);
 
 
-// 2
-	printf("test 2, press ENTER to continue\n");
+	printf("press ENTER to start\n");
 	getchar();
 
-	for (i = 0; i < 5; i++)
+	for(i = 0; i < 100000; i++)
+	{
+		;
+	}
+
+
+	for (i = 0; i < 8; i++)
 	{
 
-	startcycle = __rdtsc();
+		startcycle = __rdtsc();
 
-    Status = NtReadFile(FileHandle,                    // file Handle
-                         0,                            // event Handle
-                         NULL,                         // APC entry point
-                         NULL,                         // APC context
-                         &Iosb,                        // IOSB address
-                         buff,                         // ptr to data buffer
-                         32,                           // length
-                         0,                            // byte offset
-                         NULL);                        // key
+		Status = NtReadFile(FileHandle,                    // file Handle
+			0,                            // event Handle
+			NULL,                         // APC entry point
+			NULL,                         // APC context
+			&Iosb,                        // IOSB address
+			buff,                         // ptr to data buffer
+			32,                           // length
+			0,                            // byte offset
+			NULL);                        // key
 
-    //
-    // If the WRITE system service request fails, bail out...
-    //
-    if(!NT_SUCCESS(Status) )
-        {
-        printf("NtReadFile request failed 0x%0x\n", Status);
-        exit(0);
-        }
+		//
+		// If the WRITE system service request fails, bail out...
+		//
+		if(!NT_SUCCESS(Status) )
+		{
+			printf("NtReadFile request failed 0x%0x\n", Status);
+			exit(0);
+		}
 
-    //
-    // Check the returned status from the WRITE.  
-    //
-    if(!NT_SUCCESS(Iosb.Status) )
-        {
-        printf("READ failed with status = 0x%0x\n",Iosb.Status);
-        exit(0);
-       }
+		//
+		// Check the returned status from the WRITE.  
+		//
+		if(!NT_SUCCESS(Iosb.Status) )
+		{
+			printf("READ failed with status = 0x%0x\n",Iosb.Status);
+			exit(0);
+		}
 
 
-	endcycle = __rdtsc();
+		endcycle = __rdtsc();
 
-	printf("startcycle %lld, endcycle %lld, %d\n", startcycle, endcycle, endcycle - startcycle);
+		printf("startcycle %lld, endcycle %lld, %d\n", startcycle, endcycle, endcycle - startcycle);
 
 	}
+
+
 	
 	
 	printf("now load hypervisor, press ENTER to continue\n");
@@ -214,44 +185,43 @@ main (int Argc, char ** Argv )
 	}
 
 
-// 3
 
-	for (i = 0; i < 5; i++)
+	for (i = 0; i < 8; i++)
 	{
 
-	startcycle = __rdtsc();
+		startcycle = __rdtsc();
 
-    Status = NtReadFile(FileHandle,                    // file Handle
-                         0,                            // event Handle
-                         NULL,                         // APC entry point
-                         NULL,                         // APC context
-                         &Iosb,                        // IOSB address
-                         buff,                         // ptr to data buffer
-                         32,                           // length
-                         0,                            // byte offset
-                         NULL);                        // key
+		Status = NtReadFile(FileHandle,                    // file Handle
+			0,                            // event Handle
+			NULL,                         // APC entry point
+			NULL,                         // APC context
+			&Iosb,                        // IOSB address
+			buff,                         // ptr to data buffer
+			32,                           // length
+			0,                            // byte offset
+			NULL);                        // key
 
-    //
-    // If the WRITE system service request fails, bail out...
-    //
-    if(!NT_SUCCESS(Status) )
-        {
-        printf("NtReadFile request failed 0x%0x\n", Status);
-        exit(0);
-        }
+		//
+		// If the WRITE system service request fails, bail out...
+		//
+		if(!NT_SUCCESS(Status) )
+		{
+			printf("NtReadFile request failed 0x%0x\n", Status);
+			exit(0);
+		}
 
-    //
-    // Check the returned status from the WRITE.  
-    //
-    if(!NT_SUCCESS(Iosb.Status) )
-        {
-        printf("READ failed with status = 0x%0x\n",Iosb.Status);
-        exit(0);
-       }
+		//
+		// Check the returned status from the WRITE.  
+		//
+		if(!NT_SUCCESS(Iosb.Status) )
+		{
+			printf("READ failed with status = 0x%0x\n",Iosb.Status);
+			exit(0);
+		}
 
-	endcycle = __rdtsc();
+		endcycle = __rdtsc();
 
-	printf("startcycle %lld, endcycle %lld, %d\n", startcycle, endcycle, endcycle - startcycle);
+		printf("startcycle %lld, endcycle %lld, %d\n", startcycle, endcycle, endcycle - startcycle);
 
 	}
 

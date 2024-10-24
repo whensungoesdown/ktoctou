@@ -277,6 +277,9 @@ int main(int argc, const char* argv[])
 	//	return -1;
 	//}
 
+	printf("press ENTER to start\n");
+	getchar();
+
 	status = KillNative(pid0);
 	if (NT_SUCCESS(status))
 		printf("Kill %d Success!\n", pid0);
