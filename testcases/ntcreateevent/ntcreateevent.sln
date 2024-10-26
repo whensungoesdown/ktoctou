@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual C++ Express 2005
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ntcreateevent", "ntcreateevent\ntcreateevent.vcproj", "{5F31D735-A1EA-4AA7-9C5A-C689D67F9D20}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5F31D735-A1EA-4AA7-9C5A-C689D67F9D20}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5F31D735-A1EA-4AA7-9C5A-C689D67F9D20}.Debug|Win32.Build.0 = Debug|Win32
+		{5F31D735-A1EA-4AA7-9C5A-C689D67F9D20}.Release|Win32.ActiveCfg = Release|Win32
+		{5F31D735-A1EA-4AA7-9C5A-C689D67F9D20}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
